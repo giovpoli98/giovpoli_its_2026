@@ -1,0 +1,146 @@
+<!DOCTYPE html> <html lang="it"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Copernicus Ground Motion</title> <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /> <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script> <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.3/papaparse.min.js"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script> <style> * { box-sizing: border-box; } body { margin: 0; font-family: Arial, sans-serif; background: #f2f4f7; color: #222; } /* ========================================================= HEADER ========================================================= */ header { height: 75px; background: #1565C0; color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; box-shadow: 0 2px 8px rgba(0,0,0,.25); position: relative; z-index: 1000; } .header-title { font-size: 21px; font-weight: bold; } .header-subtitle { font-size: 12px; opacity: .9; } /* ========================================================= CONTROL PANEL ========================================================= */ #controlPanel { position: fixed; top: 90px; left: 20px; width: 340px; background: white; padding: 18px; border-radius: 10px; box-shadow: 0 3px 18px rgba(0,0,0,.25); z-index: 9999; } #controlPanel h2 { margin: 0 0 15px 0; color: #1565C0; font-size: 18px; } .file-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; background: #fafafa; } .info { margin-top: 15px; padding: 10px; background: #f5f7fa; border-radius: 6px; font-size: 13px; line-height: 1.6; } .info b { color: #1565C0; } button { width: 100%; border: 0; border-radius: 6px; padding: 10px; margin-top: 10px; background: #1565C0; color: white; font-weight: bold; cursor: pointer; } button:hover { background: #0d47a1; } /* ========================================================= MAPPA ========================================================= */ #map { position: absolute; top: 75px; left: 0; right: 0; bottom: 0; } /* ========================================================= PROGRESS ========================================================= */ .progress-container { margin-top: 12px; width: 100%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; } #progressBar { height: 100%; width: 0%; background: #1565C0; transition: width .1s; } #status { margin-top: 8px; font-size: 12px; color: #666; } /* ========================================================= LEGENDA ========================================================= */ #legend { position: fixed; bottom: 20px; left: 20px; width: 350px; background: white; padding: 12px; border-radius: 8px; border: 2px solid #555; box-shadow: 0 2px 10px rgba(0,0,0,.3); z-index: 9998; } .legend-title { font-weight: bold; color: #1565C0; font-size: 16px; } .gradient { height: 22px; margin-top: 8px; border: 1px solid #777; background: linear-gradient( to right, #8B0000 0%, #D73027 12.5%, #F46D43 25%, #FDAE61 37.5%, #FFFFBF 50%, #A6D96A 62.5%, #66BD63 75%, #3288BD 87.5%, #313695 100% ); } .legend-values { display: flex; justify-content: space-between; font-size: 11px; } /* ========================================================= GRAFICO ========================================================= */ #chartPanel { display: none; position: fixed; top: 90px; right: 20px; width: 650px; height: 480px; background: white; border: 3px solid #1565C0; border-radius: 10px; box-shadow: 0 5px 25px rgba(0,0,0,.5); padding: 15px; z-index: 99999; } .chart-header { display: flex; justify-content: space-between; align-items: center; } #chartTitle { font-size: 19px; font-weight: bold; color: #1565C0; } #closeChart { width: auto; margin: 0; padding: 5px 12px; background: #d32f2f; } #chartInfo { font-size: 13px; color: #555; margin: 8px 0; } .chart-container { width: 100%; height: 380px; } /* ========================================================= RESPONSIVE ========================================================= */ @media(max-width: 800px) { #controlPanel { width: calc(100% - 30px); left: 15px; top: 85px; } #legend { width: calc(100% - 30px); left: 15px; bottom: 15px; } #chartPanel { width: calc(100% - 20px); height: 450px; left: 10px; right: 10px; top: 80px; } .chart-container { height: 350px; } } </style> </head> <body> <header>
+<div>
+
+    <div class="header-title">
+        Copernicus Ground Motion
+    </div>
+
+    <div class="header-subtitle">
+        Mappa dei punti e serie temporali degli spostamenti
+    </div>
+
+</div>
+
+</header> <!-- ========================================================= PANNELLO CONTROLLO ========================================================= --> <div id="controlPanel">
+<h2>📂 Importazione CSV</h2>
+
+<input
+    type="file"
+    id="csvFile"
+    class="file-input"
+    accept=".csv"
+>
+
+<div class="info">
+
+    <div>
+        <b>File:</b>
+        <span id="fileName">Nessun file</span>
+    </div>
+
+    <div>
+        <b>Punti:</b>
+        <span id="pointCount">-</span>
+    </div>
+
+    <div>
+        <b>Date:</b>
+        <span id="dateCount">-</span>
+    </div>
+
+    <div>
+        <b>Periodo:</b>
+        <span id="period">-</span>
+    </div>
+
+    <div>
+        <b>Esclusi:</b>
+        <span id="excluded">-</span>
+    </div>
+
+    <hr>
+
+    <div>
+        <b>Min:</b>
+        <span id="minValue">-</span>
+        mm
+    </div>
+
+    <div>
+        <b>Max:</b>
+        <span id="maxValue">-</span>
+        mm
+    </div>
+
+    <div>
+        <b>Media:</b>
+        <span id="avgValue">-</span>
+        mm
+    </div>
+
+</div>
+
+
+<div class="progress-container">
+
+    <div id="progressBar"></div>
+
+</div>
+
+
+<div id="status">
+    Carica un CSV per iniziare.
+</div>
+
+</div> <!-- ========================================================= MAPPA ========================================================= --> <div id="map"></div> <!-- ========================================================= LEGENDA ========================================================= --> <div id="legend">
+<div class="legend-title">
+    Ground Motion
+</div>
+
+<div class="gradient"></div>
+
+<div class="legend-values">
+
+    <span>-10</span>
+    <span>-5</span>
+    <span>0</span>
+    <span>+5</span>
+    <span>+10</span>
+
+</div>
+
+<div style="
+    margin-top:7px;
+    font-size:11px;
+">
+
+    🔴 Abbassamento
+    &nbsp;&nbsp;
+    🟡 Stabile
+    &nbsp;&nbsp;
+    🔵 Innalzamento
+
+</div>
+
+<div style="
+    margin-top:4px;
+    font-size:10px;
+    color:#777;
+">
+
+    Valori indicativi: -10 / +10 mm
+
+</div>
+
+</div> <!-- ========================================================= PANNELLO GRAFICO ========================================================= --> <div id="chartPanel">
+<div class="chart-header">
+
+    <div id="chartTitle">
+        Serie temporale
+    </div>
+
+    <button id="closeChart">
+        X
+    </button>
+
+</div>
+
+<div id="chartInfo"></div>
+
+<div class="chart-container">
+
+    <canvas id="groundChart"></canvas>
+
+</div>
+
+</div> <script> /* ============================================================ CONFIGURAZIONE ============================================================ */ const LAT = "latitude"; const LON = "longitude"; const PID = "pid"; const VALORE_MIN = -10; const VALORE_MAX = 10; /* ============================================================ VARIABILI ============================================================ */ let dati = []; let dateColumns = []; let dateStrings = []; let chart = null; let markersLayer = null; /* ============================================================ MAPPA ============================================================ */ const map = L.map("map", { preferCanvas: true, zoomControl: true }); /* ============================================================ SATELLITE ============================================================ */ const satellite = L.tileLayer( "https://server.arcgisonline.com/" + "ArcGIS/rest/services/World_Imagery/" + "MapServer/tile/{z}/{y}/{x}", { attribution: "Esri, Maxar, Earthstar Geographics, " + "and the GIS User Community" } ); /* ============================================================ STREET ============================================================ */ const street = L.tileLayer( "https://{s}.tile.openstreetmap.org/" + "{z}/{x}/{y}.png", { attribution: "OpenStreetMap" } ); /* ============================================================ LAYER PUNTI ============================================================ */ markersLayer = L.layerGroup().addTo(map); /* ============================================================ DEFAULT ============================================================ */ satellite.addTo(map); map.setView( [41.9, 12.5], 6 ); /* ============================================================ LAYER CONTROL ============================================================ */ L.control.layers( { "Satellite": satellite, "Street": street }, { "Ground Motion": markersLayer }, { collapsed: false } ).addTo(map); /* ============================================================ COLORE GROUND MOTION ============================================================ */ function coloreGroundMotion(valore) { if ( valore === null || valore === undefined || Number.isNaN(valore) ) { return "#808080"; } valore = Math.max( VALORE_MIN, Math.min(VALORE_MAX, valore) ); const palette = [ [-10, "#8B0000"], [-7.5, "#D73027"], [-5, "#F46D43"], [-2.5, "#FDAE61"], [0, "#FFFFBF"], [2.5, "#A6D96A"], [5, "#66BD63"], [7.5, "#3288BD"], [10, "#313695"] ]; for ( let i = 0; i < palette.length - 1; i++ ) { const [ v1, c1 ] = palette[i]; const [ v2, c2 ] = palette[i + 1]; if ( valore >= v1 && valore <= v2 ) { const t = (valore - v1) / (v2 - v1); return interpolateColor( c1, c2, t ); } } return "#808080"; } /* ============================================================ INTERPOLAZIONE COLORE ============================================================ */ function interpolateColor( color1, color2, amount ) { const c1 = color1.substring(1); const c2 = color2.substring(1); const r1 = parseInt( c1.substring(0, 2), 16 ); const g1 = parseInt( c1.substring(2, 4), 16 ); const b1 = parseInt( c1.substring(4, 6), 16 ); const r2 = parseInt( c2.substring(0, 2), 16 ); const g2 = parseInt( c2.substring(2, 4), 16 ); const b2 = parseInt( c2.substring(4, 6), 16 ); const r = Math.round( r1 + (r2 - r1) * amount ); const g = Math.round( g1 + (g2 - g1) * amount ); const b = Math.round( b1 + (b2 - b1) * amount ); return "#" + r.toString(16).padStart(2, "0") + g.toString(16).padStart(2, "0") + b.toString(16).padStart(2, "0"); } /* ============================================================ CONTROLLO COLONNA DATA ============================================================ */ function isDateColumn(nome) { const testo = String(nome).trim(); if ( !/^\d{8}$/.test(testo) ) { return false; } const anno = Number( testo.substring(0, 4) ); const mese = Number( testo.substring(4, 6) ); const giorno = Number( testo.substring(6, 8) ); const data = new Date( anno, mese - 1, giorno ); return ( data.getFullYear() === anno && data.getMonth() === mese - 1 && data.getDate() === giorno ); } /* ============================================================ FORMATTA DATA ============================================================ */ function formatDate(dateString) { const testo = String(dateString); return ( testo.substring(6, 8) + "/" + testo.substring(4, 6) + "/" + testo.substring(0, 4) ); } /* ============================================================ LETTURA CSV ============================================================ */ document .getElementById("csvFile") .addEventListener( "change", function(event) { const file = event.target.files[0]; if (!file) { return; } document .getElementById("fileName") .textContent = file.name; document .getElementById("status") .textContent = "Lettura del CSV..."; Papa.parse( file, { header: true, skipEmptyLines: true, dynamicTyping: false, complete: function(results) { processCSV( results.data, results.meta.fields || [], file.name ); }, error: function(error) { alert( "Errore lettura CSV:\n" + error.message ); } } ); } ); /* ============================================================ ELABORAZIONE CSV ============================================================ */ function processCSV( rows, columns, filename ) { /* -------------------------------------------------------- CONTROLLO COLONNE -------------------------------------------------------- */ const required = [ PID, LAT, LON ]; const missing = required.filter( column => !columns.includes(column) ); if (missing.length > 0) { alert( "CSV non valido.\n\n" + "Colonne mancanti:\n" + missing.join("\n") ); return; } /* -------------------------------------------------------- DATE -------------------------------------------------------- */ dateColumns = columns.filter( isDateColumn ); dateColumns.sort(); if (dateColumns.length < 2) { alert( "Sono necessarie almeno " + "due colonne temporali YYYYMMDD." ); return; } dateStrings = dateColumns.map( formatDate ); /* -------------------------------------------------------- DATI -------------------------------------------------------- */ dati = []; let esclusi = 0; rows.forEach( (row, index) => { const lat = Number( String( row[LAT] ).replace(",", ".") ); const lon = Number( String( row[LON] ).replace(",", ".") ); if ( !Number.isFinite(lat) || !Number.isFinite(lon) ) { esclusi++; return; } const serie = dateColumns.map( column => { const value = Number( String( row[column] ).replace(",", ".") ); return Number.isFinite(value) ? value : null; } ); const first = serie[0]; const last = serie[serie.length - 1]; let spostamento = null; if ( first !== null && last !== null ) { spostamento = last - first; } dati.push({ indice: dati.length, pid: row[PID], lat: lat, lon: lon, serie: serie, spostamento: spostamento }); } ); /* -------------------------------------------------------- STATISTICHE -------------------------------------------------------- */ const valori = dati .map( item => item.spostamento ) .filter( value => value !== null ); let min = null; let max = null; let avg = null; if (valori.length > 0) { min = Math.min(...valori); max = Math.max(...valori); avg = valori.reduce( (a, b) => a + b, 0 ) / valori.length; } /* -------------------------------------------------------- INTERFACCIA -------------------------------------------------------- */ document .getElementById("pointCount") .textContent = dati.length.toLocaleString("it-IT"); document .getElementById("dateCount") .textContent = dateColumns.length; document .getElementById("excluded") .textContent = esclusi; document .getElementById("period") .textContent = dateStrings[0] + " → " + dateStrings[ dateStrings.length - 1 ]; document .getElementById("minValue") .textContent = min === null ? "-" : min.toFixed(2); document .getElementById("maxValue") .textContent = max === null ? "-" : max.toFixed(2); document .getElementById("avgValue") .textContent = avg === null ? "-" : avg.toFixed(2); document .getElementById("status") .textContent = "Creazione dei punti sulla mappa..."; /* -------------------------------------------------------- MAPPA -------------------------------------------------------- */ markersLayer.clearLayers(); if (dati.length === 0) { alert( "Nessun punto valido trovato." ); return; } const bounds = []; /* -------------------------------------------------------- CREAZIONE MARKER -------------------------------------------------------- */ dati.forEach( (item, index) => { const colore = coloreGroundMotion( item.spostamento ); let stato = "N/D"; let testoSpostamento = "N/D"; if ( item.spostamento !== null ) { testoSpostamento = item.spostamento.toFixed(2) + " mm"; if ( item.spostamento < 0 ) { stato = "ABBASSAMENTO"; } else if ( item.spostamento > 0 ) { stato = "INNALZAMENTO"; } else { stato = "STABILE"; } } const popup = ` <div style=" font-family:Arial; width:260px; "> <div style=" font-size:17px; font-weight:bold; color:#1565C0; margin-bottom:10px; "> Punto ${escapeHTML( item.pid )} </div> <b>Stato:</b> ${stato} <br><br> <b>Spostamento:</b> ${testoSpostamento} <br><br> <b>Latitudine:</b> ${item.lat.toFixed(6)} <br> <b>Longitudine:</b> ${item.lon.toFixed(6)} <br><br> <button onclick=" mostraSerie( ${index} ) " style=" width:100%; background:#1565C0; color:white; border:0; padding:8px; border-radius:5px; cursor:pointer; " > 📈 Apri serie temporale </button> </div> `; const marker = L.circleMarker( [ item.lat, item.lon ], { radius: 4, color: colore, fillColor: colore, fillOpacity: .90, opacity: 1, weight: .7 } ); marker.bindPopup( popup ); marker.addTo( markersLayer ); bounds.push( [ item.lat, item.lon ] ); } ); /* -------------------------------------------------------- ZOOM -------------------------------------------------------- */ if (bounds.length > 0) { map.fitBounds( bounds, { padding: [ 30, 30 ] } ); } document .getElementById("status") .textContent = "Completato: " + dati.length.toLocaleString("it-IT") + " punti."; document .getElementById("progressBar") .style.width = "100%"; } /* ============================================================ ESCAPE HTML ============================================================ */ function escapeHTML(value) { return String(value) .replaceAll( "&", "&amp;" ) .replaceAll( "<", "&lt;" ) .replaceAll( ">", "&gt;" ) .replaceAll( '"', "&quot;" ) .replaceAll( "'", "&#039;" ); } /* ============================================================ SERIE TEMPORALE ============================================================ */ function mostraSerie(indice) { const item = dati[indice]; if (!item) { alert( "Serie temporale non disponibile." ); return; } const panel = document.getElementById( "chartPanel" ); const canvas = document.getElementById( "groundChart" ); const title = document.getElementById( "chartTitle" ); const info = document.getElementById( "chartInfo" ); panel.style.display = "block"; title.textContent = "📈 Punto " + item.pid; info.innerHTML = "Spostamento totale: <b>" + ( item.spostamento === null ? "N/D" : item.spostamento.toFixed(2) + " mm" ) + "</b>"; if (chart !== null) { chart.destroy(); chart = null; } chart = new Chart( canvas, { type: "line", data: { labels: dateStrings, datasets: [ { label: "Spostamento", data: item.serie, borderColor: "#1565C0", backgroundColor: "rgba(21,101,192,.12)", borderWidth: 2, pointRadius: 1.5, pointHoverRadius: 5, tension: .15, fill: true, spanGaps: true } ] }, options: { responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false }, plugins: { legend: { display: true }, tooltip: { callbacks: { label: function(context) { return ( " " + context.parsed.y + " mm" ); } } } }, scales: { x: { ticks: { maxTicksLimit: 12, autoSkip: true, maxRotation: 45, minRotation: 0 }, title: { display: true, text: "Data" } }, y: { title: { display: true, text: "Spostamento (mm)" } } } } } ); } /* ============================================================ CHIUDI GRAFICO ============================================================ */ document .getElementById("closeChart") .addEventListener( "click", function() { document .getElementById( "chartPanel" ) .style.display = "none"; } ); </script> </body> </html>
